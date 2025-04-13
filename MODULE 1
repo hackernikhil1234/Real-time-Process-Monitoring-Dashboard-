@@ -1,0 +1,55 @@
+import psutil
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import numpy as np
+
+#function to retrieve the cpu usage
+def get_cpu_percent():
+    return psutil.cpu_percent()
+
+#function to retrieve the memory usage 
+def get_memory_percent():
+    return psutil.virtual_memory().percent
+
+#function to update the cpu plot 
+def update_cpu_plot(frame):
+    cpu_percent = get_cpu_percent()
+    cpu_time.append(frame)
+    cpu_data.append(cpu_percent)
+    ax_cpu.clear()
+    ax_cpu.plot(cpu_time,cpu_data,label='CPU Usage (%) ')
+    ax_cpu.legend()
+
+#function to update the memory plot 
+def update_memory_plot(frame):
+    memory_percent=get_memory_percent()
+    memory_time.append(frame)
+    memory_data.append(memory_percent)
+    ax_memory.clear()
+    ax_memory.plot(memory_time,memory_data,label='Memory usage (%)')
+    ax_memory.legend()
+
+#initialize lists to store data from plotting
+cpu_time=[]
+cpu_data=[]
+memory_time=[]
+memory_data=[]
+
+#create figure and axes for each plot
+fig_cpu, ax_cpu =plt.subplots()
+fig_memory,ax_memory=plt.subplots()
+#set up plots
+plot=[
+    (ax_cpu,'CPU Usage (%)',update_cpu_plot),
+    (ax_memory,'Memory Usage (%)',update_memory_plot),
+]
+for ax, title, _ in plot:
+    ax.set_xlabel('Time')
+    ax.set_ylabel(title)
+    ax.set_title(title)
+
+#set animation for each plot 
+ani_cpu= FuncAnimation(fig_cpu,update_cpu_plot,frames=np.arange(0,100),interval=1000)
+ani_memory= FuncAnimation(fig_memory,update_memory_plot,frames=np.arange(0,100),interval=1000)
+#show the plot
+plt.show()
