@@ -1,8 +1,8 @@
-## 1.	Problem Statement: 
+1.	Problem Statement: 
 •	Monitoring system resources manually or using complex tools can be challenging for developers and users.
 •	There is a need for a simple, real-time, and visually intuitive dashboard to monitor system performance. 
  
-## 2.	Project Overview:  
+2.	Project Overview:  
 This project provides a real-time dashboard to visualize system metrics:
 •	CPU Usage
 •	Memory Usage
@@ -10,7 +10,7 @@ This project provides a real-time dashboard to visualize system metrics:
 •	Disk Usage
 •	Process Count 
  
-## 3.	Goals: 
+3.	Goals: 
 •	Build a lightweight system monitoring tool
 •	Use Python libraries for backend and visualization
 •	Display real-time data refresh every second
