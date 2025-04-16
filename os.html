@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-900 text-white">
+<head>
+  <meta charset="UTF-8">
+  <title>System Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="p-6 space-y-6">
+  <h1 class="text-3xl font-bold text-center">Real-Time System Monitor</h1>
+
+  <div class="grid grid-cols-2 gap-6">
+    <div class="p-4 bg-gray-800 rounded-xl">
+      <canvas id="cpuChart"></canvas>
+    </div>
+    <div class="p-4 bg-gray-800 rounded-xl">
+      <canvas id="memoryChart"></canvas>
+    </div>
+  </div>
+
+  <div class="mt-6 p-4 bg-gray-800 rounded-xl">
+    <h2 class="text-xl mb-2">Running Processes</h2>
+    <table class="w-full table-auto text-sm">
+      <thead class="bg-gray-700">
+        <tr>
+          <th class="px-4 py-2 text-center">PID</th>
+          <th class="px-4 py-2 text-center">Name</th>
+          <th class="px-4 py-2 text-center">CPU %</th>
+          <th class="px-4 py-2 text-center">Memory %</th>
+          <th class="px-4 py-2 text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody id="processTable" class="divide-y divide-gray-600">
+        <!-- Populated by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const cpuChartCtx = document.getElementById('cpuChart').getContext('2d');
+    const memoryChartCtx = document.getElementById('memoryChart').getContext('2d');
+
+    const cpuChart = new Chart(cpuChartCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'CPU Usage %',
+          data: [],
+          borderColor: 'lime',
+          fill: false
+        }]
+      },
+      options: {
+        scales: { y: { beginAtZero: true, max: 100 } }
+      }
+    });
+
+    const memoryChart = new Chart(memoryChartCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Memory Usage %',
+          data: [],
+          borderColor: 'cyan',
+          fill: false
+        }]
+      },
+      options: {
+        scales: { y: { beginAtZero: true, max: 100 } }
+      }
+    });
+
+    async function updateCharts() {
+      const res = await fetch('/system');
+      const data = await res.json();
+      const time = new Date().toLocaleTimeString();
+
+      cpuChart.data.labels.push(time);
+      cpuChart.data.datasets[0].data.push(data.cpu);
+      memoryChart.data.labels.push(time);
+      memoryChart.data.datasets[0].data.push(data.memory);
+
+      if (cpuChart.data.labels.length > 10) {
+        cpuChart.data.labels.shift();
+        cpuChart.data.datasets[0].data.shift();
+        memoryChart.data.labels.shift();
+        memoryChart.data.datasets[0].data.shift();
+      }
+
+      cpuChart.update();
+      memoryChart.update();
+    }
+
+    async function loadProcesses() {
+      const res = await fetch('/processes');
+      const processes = await res.json();
+      const table = document.getElementById('processTable');
+      table.innerHTML = '';
+
+      processes.forEach(p => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="px-4 py-2 text-center">${p.pid}</td>
+          <td class="px-4 py-2 text-center">${p.name}</td>
+          <td class="px-4 py-2 text-center">${p.cpu_percent}</td>
+          <td class="px-4 py-2 text-center">${p.memory_percent}</td>
+          <td class="px-4 py-2 text-center">
+            <button onclick="kill(${p.pid})" class="bg-red-600 px-3 py-1 rounded hover:bg-red-700">Kill</button>
+          </td>
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    async function kill(pid) {
+      const res = await fetch(`/kill/${pid}`, { method: 'DELETE' });
+      const result = await res.json();
+      alert(result.message || result.error);
+      loadProcesses();
+    }
+
+    // Auto-update like in the tkinter version
+    setInterval(updateCharts, 1000);
+    setInterval(loadProcesses, 3000);
+
+    // Initial load
+    updateCharts();
+    loadProcesses();
+  </script>
+</body>
+</html>
